@@ -1,4 +1,4 @@
-﻿#include <iostream>
+#include <iostream>
 #include <deque>
 #include <clocale>
 #include <string>
@@ -111,10 +111,7 @@ public:
     void getPolyndromCheck()
     {
         system("cls");
-        if (polyndrom_check())
-            cout << "Введённая строка явяется полиндромом\n";
-        else
-            cout << "Введенная строка не является полиндромом\n";
+        polyndrom_check() ? cout << "Введённая строка явяется полиндромом\n" : cout << "Введенная строка не является полиндромом\n";
         _getch();
     }
 };
