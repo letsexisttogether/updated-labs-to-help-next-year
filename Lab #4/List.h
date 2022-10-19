@@ -43,7 +43,7 @@ public:
 			: m_CurrentNode(node), m_DefaultNode(node)
 		{}
 
-		_LType GetCurrent()
+		const _LType& GetCurrent()
 		{
 			return m_CurrentNode->Data;
 		}
@@ -90,7 +90,6 @@ public:
 	List() = default;
 	List(const ListRef extraList)
 	{
-
 		NodePtr tempNode = extraList.m_Strat;
 		while (tempNode->Next != extraList.m_Strat)
 		{
@@ -160,22 +159,20 @@ public:
 	}
 	
 	template<class _SType = _LType>
-	TypeRef Search(_SType predValue, bool Predicate(_LType, _SType) 
+	const TypeRef Search(_SType predValue, bool Predicate(const _LType&, const _SType&) 
 		= Comps::SimpleComp<_LType>) const noexcept
 	{
-		NodePtr temp = m_Strat;
+		List<_LType>::Iterator iter = Begin();
 		do
 		{
-			if (Predicate(temp->Data, predValue))
+			if (Predicate(iter.GetCurrent(), predValue))
 			{
-				return temp->Data;
+				return iter.GetCurrent();
 			}
-			temp = m_Strat->Next;
-		} while (temp != m_Strat);
 
-		_LType newEmptyValue;
-
-		return newEmptyValue;
+		} while (iter.MoveNext());
+ 
+		return nullptr;
 	}
 
 	size_t Size() const noexcept
