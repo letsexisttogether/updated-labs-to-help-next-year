@@ -19,7 +19,7 @@ private:
 
 	public:
 		ListNode() = delete;
-		ListNode(_NType data, ListNode<_NType>* prev, ListNode<_NType>* next)
+		ListNode(const _NType& data, ListNode<_NType>* prev, ListNode<_NType>* next)
 			: Data(data), Prev(prev), Next(next)
 		{}
 	};
@@ -35,7 +35,7 @@ public:
 	{
 	private:
 		NodePtr m_CurrentNode{};
-		NodePtr m_DefaultNode{};
+		const NodePtr m_DefaultNode{};
 
 	public:
 		Iterator() = delete;
@@ -43,11 +43,11 @@ public:
 			: m_CurrentNode(node), m_DefaultNode(node)
 		{}
 
-		const _LType& GetCurrent()
+		_LType& GetCurrent() const noexcept
 		{
 			return m_CurrentNode->Data;
 		}
-		bool MoveNext()
+		bool MoveNext() noexcept
 		{
 			if (m_CurrentNode->Next != m_CurrentNode && m_CurrentNode->Next != m_DefaultNode)
 			{
@@ -57,7 +57,7 @@ public:
 
 			return false;
 		}
-		bool MoveBack()
+		bool MoveBack() noexcept
 		{
 			if (m_CurrentNode->Prev != m_CurrentNode && m_CurrentNode->Prev != m_DefaultNode)
 			{
@@ -66,16 +66,16 @@ public:
 			}
 			return false;
 		}
-		void GetDefault()
+		void Reset() noexcept
 		{
 			m_CurrentNode = m_DefaultNode;
 		}
 		
-		void operator ++()
+		void operator ++() noexcept
 		{
 			MoveNext();
 		}
-		bool operator != (const NodePtr extraNode)
+		bool operator != (const NodePtr extraNode) const noexcept
 		{
 			return (m_CurrentNode != extraNode);
 		}
@@ -99,23 +99,30 @@ public:
 		Add(extraList.m_End->Data);
 
 	}
+	List(std::initializer_list<_LType> list)
+	{
+		for (const _LType& element : list)
+		{
+			Add(element);
+		}
+	}
 
-	void Add(_LType value)
+	void Add(const TypeRef m_Value)
 	{
 		if (!m_Strat)
 		{
-			m_Strat = new Node(value, nullptr, nullptr);
+			m_Strat = new Node(m_Value, nullptr, nullptr);
 			m_End = m_Strat;
 		}
 		else if (m_Strat == m_End)
 		{
-			m_End = new Node(value, m_Strat, m_Strat);
+			m_End = new Node(m_Value, m_Strat, m_Strat);
 			m_Strat->Next = m_End;
 			m_Strat->Prev = m_End;
 		}
 		else
 		{
-			NodePtr newNode = new Node(value, m_End, m_Strat);
+			NodePtr newNode = new Node(m_Value, m_End, m_Strat);
 			m_End->Next = newNode;
 			m_End = newNode;
 			m_Strat->Prev = m_End;
@@ -123,7 +130,7 @@ public:
 		
 		++m_Size;
 	}
-	bool Delete(_LType value)
+	bool Delete(_LType m_Value)
 	{
 		if (!m_Strat)
 		{
@@ -133,7 +140,7 @@ public:
 		NodePtr temp = m_Strat;
 		do
 		{
-			if (temp->Data == value)
+			if (temp->Data == m_Value)
 			{
 				if (temp == m_Strat)
 				{
@@ -157,21 +164,22 @@ public:
 
 		return false;
 	}
-	
+
 	template<class _SType = _LType>
-	const TypeRef Search(_SType predValue, bool Predicate(const _LType&, const _SType&) 
+	_LType * const Search(_SType predValue, bool Predicate(const _LType&, const _SType&) 
 		= Comps::SimpleComp<_LType>) const noexcept
 	{
-		List<_LType>::Iterator iter = Begin();
+		List<_LType>::Iterator iter{ Begin() };
 		do
 		{
 			if (Predicate(iter.GetCurrent(), predValue))
 			{
-				return iter.GetCurrent();
+				_LType* const ptr{ &iter.GetCurrent() };
+				return ptr;
 			}
 
 		} while (iter.MoveNext());
- 
+
 		return nullptr;
 	}
 
@@ -192,10 +200,5 @@ public:
 	{
 
 		return (m_End + sizeof(NodePtr));
-	}
-
-	void operator = (const ListRef extraList)
-	{
-		*this = List<_LType>{ extraList };
 	}
 };

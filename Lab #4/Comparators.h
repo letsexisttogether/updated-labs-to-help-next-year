@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-#include "Int32Holder.h"
+#include "MenuItem.h"
 
 _COMP_BEGIN_
 
@@ -19,6 +19,11 @@ template <class _FType, class _SType>
 bool DiffTypeValuesComp(const _FType& first, const _SType second)
 {
 	return first == second;
+}
+
+bool ItemIndexComp(const MenuItem& item, const uint16_t& index)
+{
+	return item.GetIndex() == index;
 }
 
 _COMP_END_
