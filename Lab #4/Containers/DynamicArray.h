@@ -12,72 +12,61 @@ private:
 	_DAType* m_Data{};
 
 public:
-	class ConstIterator
+	template <class _DAGetReturnType>
+	class DAIterator
 	{
 	private:
 		_DAType* m_Current{};
-	
+
 	public:
-		ConstIterator() = delete;
-		ConstIterator(const ConstIterator& extraObj) = default;
-		ConstIterator(ConstIterator&& extraObj)
+		DAIterator() = delete;
+		DAIterator(const DAIterator&) noexcept = default;
+		DAIterator(DAIterator&& extraObj) noexcept
 			: m_Current(extraObj.m_Current)
 		{
-			if (m_Current != extraObj)
-			{
-				m_Current = extraObj;
-				extraObj.m_Current = nullptr;
-			}
+			extraObj.m_Current = nullptr;
 		}
 
-		ConstIterator(_DAType *const &valuePtr)
-			: m_Current(valuePtr)
+		DAIterator(_DAType* const& ptr)
+			: m_Current(ptr)
 		{}
 
-		~ConstIterator() = default;
-	
-		// TODO: Add two of opeartor = (const Iterator&, Iterator&&) 
-		ConstIterator& operator = (const ConstIterator&) noexcept = default;
-		ConstIterator& operator = (ConstIterator&& extraObj)
-		{
-			if (m_Current != extraObj)
-			{
-				m_Current = extraObj;
-				extraObj.m_Current = nullptr;
-			}
-			return this;
-		}
-		
-		ConstIterator& operator ++() noexcept
+		~DAIterator() = default;
+
+		DAIterator& operator ++() noexcept
 		{
 			++m_Current;
 			return *this;
 		}
-		ConstIterator operator ++(int) noexcept
+		DAIterator operator ++(int) noexcept
 		{
-			ConstIterator temp{ *this };
+			DAIterator temp{ *this };
 			++this;
-
 			return temp;
 		}
 
-		_DAType operator *() const noexcept
-		{
-			return *m_Current;
-		}
-
-		bool operator != (const ConstIterator& extraObj) const noexcept
+		bool operator != (const DAIterator& extraObj) const noexcept
 		{
 			return m_Current != extraObj.m_Current;
 		}
+
+		_DAGetReturnType operator *() const noexcept
+		{
+			return *m_Current;
+		}
 	};
 
-	DynamicArray() 
-		: m_Data(new _DAType[m_ReservedSize])
+	using Iterator = DAIterator<_DAType&>;
+	using ConstIterator = DAIterator<const _DAType&>;
+
+public:
+	DynamicArray()
+		: m_Data((_DAType*) ::operator new(m_ReservedSize * sizeof(_DAType)))
 	{}
 	DynamicArray(const DynamicArray<_DAType>& extraObj)
 		: m_ReservedSize(extraObj.m_ReservedSize), m_Size(extraObj.m_Size),
-		m_Data(new _DAType[m_ReservedSize])
+		m_Data((_DAType*) ::operator new(m_ReservedSize * sizeof(_DAType)))
+
 	{
 		memcpy(m_Data, extraObj.m_Data, m_Size * _DAType);
 	}
@@ -94,7 +83,7 @@ public:
 		: m_Size(count)
 	{
 		RecalculateReservedSize();
-		m_Data = new _DAType[m_ReservedSize];
+		AllocateArrayMemory();
 
 		for (size_t i = 0; i < m_Size; i++)
 		{
@@ -105,7 +94,7 @@ public:
 		: m_Size(dataList.size())
 	{
 		RecalculateReservedSize();
-		m_Data = new _DAType[m_ReservedSize];
+		AllocateArrayMemory();
 
 		for (const _DAType& value : dataList)
 		{
@@ -115,29 +104,25 @@ public:
 
 	~DynamicArray()
 	{
-		delete[] m_Data;
+		std::destroy_n(m_Data, m_ReservedSize);
 	}
 
 	void AddBack(const _DAType& value)
 	{
-		if (m_Size >= m_ReservedSize)
-		{
-			RecalculateReservedSize();	
-			
-			_DAType* temp = m_Data;
-			m_Data = new _DAType[m_ReservedSize];
-			memcpy(m_Data, temp, m_Size * sizeof(_DAType));
-			delete[] temp;
-		}
-
-		m_Data[m_Size] = value;
-		++m_Size;
+		ReAllocateArrayMemory();
+		new (&m_Data[m_Size++]) _DAType{ value };
+	}
+	void AddBack(_DAType&& value)
+	{
+		ReAllocateArrayMemory();
+		new (&m_Data[m_Size++]) _DAType{ std::move(value) };
 	}
 
-	_NODISCARD size_t Size() const noexcept
+	_NODISCARD size_t size() const noexcept
 	{
 		return m_Size;
 	}
+
 	_NODISCARD ConstIterator begin() const noexcept
 	{
 		return ConstIterator(&m_Data[0]);
@@ -146,15 +131,23 @@ public:
 	{
 		return ConstIterator(&m_Data[m_Size]);
 	}
+	_NODISCARD Iterator begin() noexcept
+	{
+		return Iterator(&m_Data[0]);
+	}
+	_NODISCARD Iterator end() noexcept
+	{
+		return Iterator(&m_Data[m_Size]);
+	}
 
-	DynamicArray& operator = (const DynamicArray<_DAType>& extraObj) noexcept
+	DynamicArray& operator =(const DynamicArray<_DAType>& extraObj) noexcept
 	{
 		m_ReservedSize = extraObj.m_ReservedSize;
 		m_Size = extraObj.m_Size;
-		m_Data = new _DAType[m_ReservedSize];
+		m_Data = (_DAType*) ::operator new(m_ReservedSize * sizeof(_DAType));
 		memcpy(m_Data, extraObj.m_Data, m_Size);
 	}
-	DynamicArray& operator = (DynamicArray<_DAType>&& extraObj) noexcept
+	DynamicArray& operator =(DynamicArray<_DAType>&& extraObj) noexcept
 	{
 		if (m_Data == extraObj.m_Data)
 		{
@@ -170,18 +163,37 @@ public:
 		extraObj.m_ReservedSize = 0;
 	}
 
-	_DAType& operator[] (size_t index) const noexcept
+	_DAType& operator [](size_t index) const noexcept
 	{
 		return m_Data[index];
 	}
 
 private:
+	void ReAllocateArrayMemory()
+	{
+		if (m_Size >= m_ReservedSize)
+		{
+			_DAType* temp = m_Data;
+			const size_t oldReservedSize = m_ReservedSize;
+
+			RecalculateReservedSize();
+			AllocateArrayMemory();
+
+			memcpy(m_Data, temp, m_Size * sizeof(_DAType));
+			std::destroy_n(temp, oldReservedSize);
+		}
+	}
+
 	void RecalculateReservedSize()
 	{
 		while (m_Size >= m_ReservedSize)
 		{
 			m_ReservedSize *= 2;
 		}
+	}
+	void AllocateArrayMemory()
+	{
+		m_Data = (_DAType*) ::operator new(m_ReservedSize * sizeof(_DAType));
 	}
 };
 
