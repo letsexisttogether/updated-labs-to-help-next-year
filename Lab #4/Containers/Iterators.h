@@ -1,3 +1,0 @@
-#ifndef ITERATORS
-
-#endif // !ITERATORS
