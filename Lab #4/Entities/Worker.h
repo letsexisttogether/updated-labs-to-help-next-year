@@ -18,10 +18,10 @@ private:
 	float m_Wage;
 	bool m_IsTeacher;
 
-
-
+public:
 	Worker() = delete;
 	Worker(const Worker& extraObj) = default;
+	Worker(Worker&& extraObj) = default;
 	
 	Worker(const char* surname, const char* name, const char* patronymics, const char* position,
 		const Date& birthDate, uint16_t experience, float wage, bool isTeacher);
@@ -36,6 +36,8 @@ private:
 	float wage() const noexcept;
 	bool isTeacher() const noexcept;
 
+	Worker& operator = (const Worker& worker) = default;
+	Worker& operator = (Worker&& worker) = default;
 
 	bool operator == (const Worker& extraObj) const noexcept;
 

@@ -6,9 +6,6 @@
 struct Date
 {
 private:
-	friend class DateValidator;
-
-private:
 	uint16_t m_Day;
 	uint16_t m_Month;
 	uint16_t m_Year;
@@ -26,12 +23,15 @@ public:
 	uint16_t month() const noexcept;
 	uint16_t year() const noexcept;
 
+
 	Date& operator = (const Date&) = default;
 	Date& operator = (Date&&) = default;
 
 	bool operator == (const Date& extraObj) const noexcept;
 
 	friend std::ostream& operator << (std::ostream& writeStream, const Date& thisObj) noexcept;
+
+	friend class DateValidator;
 };
 
 #endif // !DATE

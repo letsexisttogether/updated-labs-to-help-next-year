@@ -26,6 +26,14 @@ const Date& Worker::birthDate() const noexcept
 {
 	return m_BirthDate;
 }
+float Worker::wage() const noexcept
+{
+	return m_Wage;
+}
+bool Worker::isTeacher() const noexcept
+{
+	return m_IsTeacher;
+}
 
 bool Worker::operator == (const Worker& extraObj) const noexcept
 {
@@ -40,6 +48,6 @@ std::ostream& operator << (std::ostream& writeStream, const Worker& thisObj)
 	writeStream << thisObj.m_Surname << ' ' << thisObj.m_Name << ' ' << thisObj.m_Patronymic
 		<< ' ' << thisObj.m_BirthDate << ' ' << thisObj.m_Experience
 		<< thisObj.m_Wage;
-	writeStream << (thisObj.m_IsTeacher) ? (" връ") : (" ЭГ");
+	writeStream << ((thisObj.m_IsTeacher) ? (" Yes") : (" No"));
 	return writeStream;
 }

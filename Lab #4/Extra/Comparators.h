@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-#include "MenuItem.h"
+#include "../Menu/MenuItem.h"
 
 _COMP_BEGIN_
 
@@ -23,7 +23,7 @@ bool DiffTypeValuesComp(const _FType& first, const _SType second)
 
 bool ItemIndexComp(const MenuItem& item, const uint16_t& index)
 {
-	return item.GetIndex() == index;
+	return item.getIndex() == index;
 }
 
 _COMP_END_
